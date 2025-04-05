@@ -53,6 +53,10 @@ const loadingEmojiList = (cdnList) => {
 };
 
 const loadingNewEmojiList = async (cdnList) => {
+    if (!cdnList) {
+        return;
+    }
+
     try {
         const result = await axios.get(`${cdnList}/info.json`);
         if (!result.data.name) {
@@ -67,19 +71,12 @@ const loadingNewEmojiList = async (cdnList) => {
             const url = `${result.data.folder}/${items}`;
             emojis.value[emojis.value.length - 1].items.push({ name: items, url });
         });
+
+        list.push(cdnList);
         localStorage.setItem("emojiList", JSON.stringify(list));
     } catch (error) {
         console.error(error);
     }
-};
-
-const save = (text) => {
-    if (!text) {
-        return;
-    }
-
-    list.push(text);
-    loadingNewEmojiList(text);
 };
 
 const read = () => {
