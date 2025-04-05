@@ -7,7 +7,11 @@
         <div class="alert" v-if="msg">{{ msg }}</div>
         <ul>
             <li v-for="(item, index) in emojis" :key="index">
-                <p class="title">{{ item.name }}</p>
+                <div class="title">
+                    <span>{{ item.name }}</span>
+                    <img src="/AkarIconsTrashCan.svg" alt="del" @click="delEmoji(index)" />
+                    <img src="/AkarIconsLinkChain.svg" alt="link" @click="shareLink(index)" />
+                </div>
                 <ul class="emojiList">
                     <li v-for="items in item.items" :key="items" class="emoji" @click="copy(items.url, items.name)">
                         <img :src="items.url" :alt="items.name" class="item" />
@@ -117,6 +121,16 @@ const copy = async (url, name) => {
     }
 };
 
+const delEmoji = (index) => {
+    list.splice(index, 1);
+    emojis.value.splice(index, 1);
+    localStorage.setItem("emojiList", JSON.stringify(list));
+};
+
+const shareLink = async (index) => {
+    await navigator.clipboard.writeText(list[index]);
+};
+
 onMounted(async () => {
     read();
     loadingEmojiList(list);
@@ -173,10 +187,20 @@ li {
     display: none;
 }
 .title {
+    display: flex;
+    align-items: center;
     font-weight: bold;
     font-synthesis: 1.2rem;
     margin: 4px;
 }
+.title span {
+    margin-right: 4px;
+}
+.title img {
+    margin-left: 6px;
+    cursor: pointer;
+}
+
 .emojiList {
     display: flex;
     flex-wrap: wrap;
