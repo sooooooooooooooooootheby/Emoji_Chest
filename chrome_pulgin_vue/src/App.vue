@@ -1,5 +1,10 @@
 <template>
     <div class="main">
+        <div class="save">
+            <input type="text" v-model="input" class="input" placeholder="输入link获取表情包" />
+            <button @click="loadingNewEmojiList(input)" class="btn">save</button>
+        </div>
+        <div class="alert" v-if="msg">{{ msg }}</div>
         <ul>
             <li v-for="(item, index) in emojis" :key="index">
                 <p class="title">{{ item.name }}</p>
@@ -17,45 +22,71 @@
 import { onMounted, ref } from "vue";
 import axios from "axios";
 
+const input = ref("");
 let list = [];
-let cdn = "";
-let info = [];
-
 const emojis = ref([]);
+const msg = ref("");
 
-const getEmojiListInfo = async () => {
+const handleAlert = (text) => {
+    msg.value = text;
+    setTimeout(() => {
+        msg.value = "";
+    }, 3000);
+};
+
+const loadingEmojiList = (cdnList) => {
+    cdnList.forEach(async (item, index) => {
+        try {
+            const result = await axios.get(`${item}/info.json`);
+            emojis.value[index] = {
+                name: result.data.name,
+                items: [],
+            };
+            result.data.items.forEach((items) => {
+                const url = `${result.data.folder}/${items}`;
+                emojis.value[index].items.push({ name: items, url });
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    });
+};
+
+const loadingNewEmojiList = async (cdnList) => {
     try {
-        const result = await axios.get("/info.json");
-        list = result.data.list;
-        cdn = result.data.cdn;
+        const result = await axios.get(`${cdnList}/info.json`);
+        if (!result.data.name) {
+            handleAlert("获取失败, 请检查链接");
+        }
+
+        emojis.value[emojis.value.length] = {
+            name: result.data.name,
+            items: [],
+        };
+        result.data.items.forEach((items) => {
+            const url = `${result.data.folder}/${items}`;
+            emojis.value[emojis.value.length - 1].items.push({ name: items, url });
+        });
+        localStorage.setItem("emojiList", JSON.stringify(list));
     } catch (error) {
         console.error(error);
     }
 };
 
-const fetchInfoSequentially = async () => {
-    for (const item of list) {
-        const url = `${cdn}${item}/info.json`;
-
-        try {
-            const result = await axios.get(url);
-            info.push(result.data);
-        } catch (error) {
-            console.error(error);
-        }
+const save = (text) => {
+    if (!text) {
+        return;
     }
+
+    list.push(text);
+    loadingNewEmojiList(text);
 };
 
-const getEmoji = () => {
-    for (const item of info) {
-        emojis.value.push({
-            name: item.name,
-            items: [],
-        });
-        for (const items of item.items) {
-            const url = `${cdn}${item.name}/${items}`;
-            emojis.value[emojis.value.length - 1].items.push({ name: items, url });
-        }
+const read = () => {
+    list = [];
+    const data = JSON.parse(localStorage.getItem("emojiList"));
+    if (data) {
+        list = data;
     }
 };
 
@@ -90,13 +121,46 @@ const copy = async (url, name) => {
 };
 
 onMounted(async () => {
-    await getEmojiListInfo();
-    await fetchInfoSequentially();
-    getEmoji();
+    read();
+    loadingEmojiList(list);
 });
 </script>
 
 <style scoped>
+.save {
+    width: 100%;
+    display: flex;
+    margin-bottom: 12px;
+}
+.input {
+    flex-grow: 1;
+}
+.btn {
+    margin-left: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn:hover {
+    background-color: #b697f3;
+}
+.input,
+.btn {
+    padding: 6px;
+    border: none;
+    outline: none;
+    background: none;
+    border: 1px solid #b697f3;
+    border-radius: 4px;
+    color: #f2f2f2;
+}
+.alert {
+    padding: 8px 12px;
+    background-color: #fefaf0;
+    color: #f3b918;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
 li {
     list-style: none;
 }
