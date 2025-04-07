@@ -16,6 +16,8 @@
 
 ## 如何使用?
 
+油猴插件使用见[Tampermonkey](./Tampermonkey.md)
+
 ### 安装插件
 
 首先你需要下载[chrome_pulgin.zip](https://github.com/sooooooooooooooooootheby/Emoji_Chest/releases/tag/p1.0.0), 将它解压出来, 放到一个你喜欢的地方, 只要你记得你放在哪就好.
